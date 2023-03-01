@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    restart: on-failure
+    container_name: personas_sql-server
+    environment:
+      ACCEPT_EULA: y
+      SA_PASSWORD: Your_password123
+    ports:
+      - "20302:1433"
+    volumes:
+      - persona-data:/var/opt/mssql
+
+volumes:
+  persona-data:

@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "openai-impl", "openai-impl\openai-impl.csproj", "{957E1AC1-F0FA-4229-9BAE-16AE177990C3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "openai-api", "openai-api\openai-api.csproj", "{824FA2EB-A1F4-4174-97B5-406086EA6582}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "openai-db", "openai-db\openai-db.csproj", "{B075FEE1-1FD8-4576-B0AE-150335D62CB9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{957E1AC1-F0FA-4229-9BAE-16AE177990C3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{957E1AC1-F0FA-4229-9BAE-16AE177990C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{957E1AC1-F0FA-4229-9BAE-16AE177990C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{957E1AC1-F0FA-4229-9BAE-16AE177990C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{824FA2EB-A1F4-4174-97B5-406086EA6582}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{824FA2EB-A1F4-4174-97B5-406086EA6582}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{824FA2EB-A1F4-4174-97B5-406086EA6582}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{824FA2EB-A1F4-4174-97B5-406086EA6582}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B075FEE1-1FD8-4576-B0AE-150335D62CB9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B075FEE1-1FD8-4576-B0AE-150335D62CB9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B075FEE1-1FD8-4576-B0AE-150335D62CB9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B075FEE1-1FD8-4576-B0AE-150335D62CB9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
