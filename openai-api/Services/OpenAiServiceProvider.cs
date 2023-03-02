@@ -5,14 +5,25 @@ namespace openai_api.Services;
 
 public class OpenAiServiceProvider
 {
+    private const string ApiKey = "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";
+    
     public static OpenAIService ProvideAiService(string engineId = "text-davinci-003")
     {
         var openAiService = new OpenAIService(new OpenAiOptions
         {
-            ApiKey = "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"
+            ApiKey = ApiKey
         });
-        openAiService.SetDefaultEngineId(engineId);
 
         return openAiService;
+    }
+
+    public static OpenAiCustomService ProvideCustomAiService()
+    {
+        var customAiService = new OpenAiCustomService(new OpenAiOptions
+        {
+            ApiKey = ApiKey
+        });
+
+        return customAiService;
     }
 }
