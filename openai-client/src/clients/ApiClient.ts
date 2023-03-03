@@ -1,4 +1,4 @@
-import axios, {AxiosInstance, AxiosResponse} from "axios";
+import axios, {AxiosInstance} from "axios";
 import {AiModel} from "../types/AiModel";
 import {CompletionRequest} from "../types/CompletionRequest";
 import {PromptRequest} from "../types/PromptRequest";
@@ -7,6 +7,8 @@ import axiosRetry from "axios-retry";
 import {PersonaRedefinitionRequest} from "../types/PersonaRedefinitionRequest";
 import {Persona} from "../types/Persona";
 import {PersonaResponse} from "../types/PersonaResponse";
+import {ChatRequest} from "../types/ChatRequest";
+import {ChatResponse} from "../types/ChatResponse";
 
 export class ApiClient {
   private client: AxiosInstance;
@@ -53,6 +55,18 @@ export class ApiClient {
 
     const dataChoice = prompt.data.choices[0].text;
     return dataChoice as string;
+  }
+
+  public async GetChat(chatRequest: ChatRequest): Promise<string> {
+    const chat = await this.client.post<ChatResponse>('/api/chat', chatRequest);
+
+    if (chat.status !== 200) {
+      console.error(chat.statusText);
+      throw new Error('Failed to get chat');
+    }
+
+    console.log('chat data choices', chat.data.choices);
+    return chat.data.choices[0].message.content;
   }
 
   public async GetCompletion(completionRequest: CompletionRequest): Promise<string> {

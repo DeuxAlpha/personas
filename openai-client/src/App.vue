@@ -6,6 +6,7 @@ import {Conversation} from "./types/Conversation";
 import VueModal from "./components/Modal.vue";
 import {AiModel} from "./types/AiModel";
 import {PersonaResponse} from "./types/PersonaResponse";
+import {ChatMessage} from "./types/ChatMessage";
 
 const persona: Ref<string[]> = ref([`
   John,
@@ -29,33 +30,79 @@ const submitLoading = ref(false);
 const convo = ref([]) as Ref<Conversation[]>;
 
 const submit = async () => {
-  if (permPersona.value !== null) {
+  if (permPersona.value !== undefined) {
+    console.log('permPersona', permPersona.value)
     submitLoading.value = true;
-    const response = await apiClient.GetCompletion({
-      Persona: permPersona.value?.description ?? '',
-      Prompt: prompt.value,
-      Prefix: getPrefix(),
-      EngineId: model.value,
-      Temperature: temperature.value,
-      FrequencyPenalty: frequencyPenalty.value,
-      PresencePenalty: presencePenalty.value,
-
-    }).finally(() => submitLoading.value = false);
-    convo.value.unshift({text: prompt.value, origin: 'user'});
-    convo.value.unshift({text: response, origin: 'bot'});
+    if (mode.value === "completion") {
+      console.log('completion', permPersona.value?.description)
+      const response = await apiClient.GetCompletion({
+        Persona: permPersona.value?.description ?? '',
+        Prompt: prompt.value,
+        Prefix: getPrefix(),
+        EngineId: model.value,
+        Temperature: temperature.value,
+        FrequencyPenalty: frequencyPenalty.value,
+        PresencePenalty: presencePenalty.value,
+      }).finally(() => submitLoading.value = false);
+      convo.value.unshift({text: prompt.value, origin: 'user'});
+      convo.value.unshift({text: response, origin: 'assistant'});
+    } else if (mode.value === 'chat') {
+      console.log('chat', permPersona.value?.description)
+      const chat: ChatMessage[] = [{role: 'system', content: `Context: You are playing a persona. Act accordingly: ${permPersona.value?.description || 'nothing'}`}, {
+        role: 'user',
+        content: prompt.value
+      }];
+      for (let c of convo.value) {
+        if (filterChat.value && c.prefix === false) {
+          continue;
+        }
+        chat.unshift({role: c.origin, content: c.text});
+      }
+      const response = await apiClient.GetChat({
+        model: model.value,
+        messages: chat
+      }).finally(() => submitLoading.value = false);
+      console.log('response', response)
+      convo.value.unshift({text: prompt.value, origin: 'user'});
+      convo.value.unshift({text: response, origin: 'assistant'});
+    }
   } else {
+    console.log('selectedPersona', selectedPersona.value)
     submitLoading.value = true;
-    const newText = await apiClient.GetCompletion({
-      Persona: selectedPersona.value,
-      Prompt: prompt.value,
-      Prefix: getPrefix(),
-      EngineId: model.value,
-      Temperature: temperature.value,
-      FrequencyPenalty: frequencyPenalty.value,
-      PresencePenalty: presencePenalty.value,
-    }).finally(() => submitLoading.value = false);
-    convo.value.unshift({text: prompt.value, origin: 'user'});
-    convo.value.unshift({text: newText, origin: 'bot'});
+    if (mode.value === "completion") {
+      console.log('completion', selectedPersona.value)
+      const newText = await apiClient.GetCompletion({
+        Persona: selectedPersona.value,
+        Prompt: prompt.value,
+        Prefix: getPrefix(),
+        EngineId: model.value,
+        Temperature: temperature.value,
+        FrequencyPenalty: frequencyPenalty.value,
+        PresencePenalty: presencePenalty.value,
+      }).finally(() => submitLoading.value = false);
+      convo.value.unshift({text: prompt.value, origin: 'user'});
+      convo.value.unshift({text: newText, origin: 'assistant'});
+    } else if (mode.value === 'chat') {
+      console.log('chat', selectedPersona.value)
+      const chat: ChatMessage[] = [{role: 'system', content: `Context: You are playing a persona. Act accordingly: ${selectedPersona.value}`}, {
+        role: 'user',
+        content: prompt.value
+      }];
+      for (let c of convo.value) {
+        if (filterChat.value && c.prefix === false) {
+          continue;
+        }
+        chat.unshift({role: c.origin, content: c.text});
+      }
+      console.log('request', chat);
+      const response = await apiClient.GetChat({
+        model: model.value,
+        messages: chat
+      }).finally(() => submitLoading.value = false);
+      console.log('response', response)
+      convo.value.unshift({text: prompt.value, origin: 'user'});
+      convo.value.unshift({text: response, origin: 'assistant'});
+    }
   }
 }
 
@@ -95,11 +142,11 @@ const getPrompt = async () => {
   }
 }
 
-const convClass = (origin: 'bot' | 'user') => {
-  return origin === 'bot' ? {'bg-gray-600': true} : {'bg-blue-600': true, 'text-right': true};
+const convClass = (origin: 'assistant' | 'user') => {
+  return origin === 'assistant' ? {'bg-gray-600': true} : {'bg-blue-600': true, 'text-right': true};
 }
-const convOriginClass = (origin: 'bot' | 'user') => {
-  return origin === 'bot' ? {'left-0': true} : {'right-0': true};
+const convOriginClass = (origin: 'assistant' | 'user') => {
+  return origin === 'assistant' ? {'left-0': true} : {'right-0': true};
 }
 
 const openEditModal = ref(false);
@@ -192,6 +239,9 @@ const onOpenAiModelsClicked = async () => {
 }
 
 const permPersona: Ref<PersonaResponse | undefined> = ref(undefined);
+
+const mode = ref('completion') as Ref<'chat' | 'completion'>
+const filterChat = ref(false);
 </script>
 
 <template>
@@ -266,6 +316,15 @@ const permPersona: Ref<PersonaResponse | undefined> = ref(undefined);
               Load OpenAI Models
               <template v-if="openAiModelsLoading">...</template>
             </button>
+            <label for="mode" class="text-gray-100 text-sm">Mode</label>
+            <select class="bg-gray-700 self-baseline" v-model="mode">
+              <option value="chat">Chat</option>
+              <option value="completion">Completion</option>
+            </select>
+            <div class="flex flex-row" v-if="mode === 'chat'">
+              <label for="filter" class="text-gray-100 text-sm">Filter chat?</label>
+              <input type="checkbox" v-model="filterChat"/>
+            </div>
             <select class="bg-gray-700 self-baseline" v-model="model">
               <option value="text-davinci-003">text-davinci-003</option>
               <option value="text-curie-001">text-curie-001</option>
@@ -334,16 +393,16 @@ const permPersona: Ref<PersonaResponse | undefined> = ref(undefined);
 
 <style scoped>
 .logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
+    height: 6em;
+    padding: 1.5em;
+    will-change: filter;
 }
 
 .logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+    filter: drop-shadow(0 0 2em #646cffaa);
 }
 
 .logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+    filter: drop-shadow(0 0 2em #42b883aa);
 }
 </style>

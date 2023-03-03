@@ -1,5 +1,5 @@
 export type Conversation = {
-  origin: 'user' | 'bot';
+  origin: 'user' | 'system' | 'assistant';
   text: string;
   prefix?: boolean;
 }
