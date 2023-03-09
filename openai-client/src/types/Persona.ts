@@ -3,3 +3,9 @@ export type Persona = {
   imgUrl?: string;
   id?: number;
 }
+
+export type PersonaV2 = {
+  persona: string;
+  imgUrl?: string;
+  id?: string;
+}
