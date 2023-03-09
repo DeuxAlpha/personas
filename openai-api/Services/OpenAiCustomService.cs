@@ -14,11 +14,13 @@ public class OpenAiCustomService : OpenAIService
     public OpenAiCustomService(HttpClient httpClient, IOptions<OpenAiOptions> settings) : base(httpClient, settings)
     {
         _apiKey = httpClient.DefaultRequestHeaders.Authorization.Parameter;
+        _chatGptClient = GetChatGptClient();
     }
 
     public OpenAiCustomService(OpenAiOptions settings, HttpClient? httpClient = null) : base(settings, httpClient)
     {
         _apiKey = settings.ApiKey;
+        _chatGptClient = GetChatGptClient();
     }
     
 

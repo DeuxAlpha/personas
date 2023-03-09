@@ -14,7 +14,7 @@ public class CompletionsController : Controller
     [HttpPost]
     public async Task<ActionResult> CreateCompletion([FromBody] CompletionRequest request)
     {
-        var openAiService = OpenAiServiceProvider.ProvideAiService(request.EngineId);
+        var openAiService = OpenAiServiceProvider.ProvideAiService();
         var prompt = string.IsNullOrWhiteSpace(request.Prefix) ? 
             $"This is you: {request.Persona} Respond to this in first person: {request.Prompt}" : 
             $"This is you: {request.Persona} Respond to this in first person: {request.Prefix} {request.Prompt}";
@@ -39,6 +39,7 @@ public class CompletionsController : Controller
             FrequencyPenalty = request.FrequencyPenalty,
             PresencePenalty = request.PresencePenalty,
             N = request.N,
+            Model = request.EngineId
         });
         
         return Ok(completion);
@@ -47,13 +48,14 @@ public class CompletionsController : Controller
     [HttpPost("prompt")]
     public async Task<ActionResult> GetPrompt([FromBody] PromptRequest request)
     {
-        var openAiService = OpenAiServiceProvider.ProvideAiService(request.Model);
+        var openAiService = OpenAiServiceProvider.ProvideAiService();
         var prompt = string.IsNullOrWhiteSpace(request.Prefix) ? 
             $"Generate an interesting prompt to generate an outlandish response from the AI. Your persona is the following: {request.Persona}" :
             $"Generate an interesting prompt to generate an outlandish response from the AI. Your persona is the following: {request.Persona} - The story so far: {request.Prefix}";
         
         var completion = await openAiService.Completions.CreateCompletion(new CompletionCreateRequest
         {
+            Model = request.Model,
             Prompt = prompt,
             MaxTokens = 100
         });

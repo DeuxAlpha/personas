@@ -7,7 +7,7 @@ public class OpenAiServiceProvider
 {
     private const string ApiKey = "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";
     
-    public static OpenAIService ProvideAiService(string engineId = "text-davinci-003")
+    public static OpenAIService ProvideAiService()
     {
         var openAiService = new OpenAIService(new OpenAiOptions
         {
