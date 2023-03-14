@@ -155,7 +155,7 @@ export class ApiClient {
     return resp.data;
   }
 
-  public async DeletePersona(personaId: number): Promise<void> {
+  public async DeletePersona(personaId: string): Promise<void> {
     if (!personaId) throw new Error('Persona id is required');
     const resp = await this.client.delete(`/api/persona/${personaId}`);
 

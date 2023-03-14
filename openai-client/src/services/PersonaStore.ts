@@ -1,5 +1,5 @@
 import localForage from "localforage";
-import {Persona, PersonaV2} from "../types/Persona";
+import {PersonaV2} from "../types/Persona";
 import {Guid} from "./Guid";
 import {ChatMessage} from "../types/ChatMessage";
 
@@ -32,6 +32,24 @@ export class PersonaStore {
     throw new Error('Persona not found')
   }
 
+  public async GetPersonaBySelf(persona: string): Promise<PersonaV2 | null> {
+    const result = await this.GetPersonas();
+    for (let p of result) {
+      if (p.persona === persona) {
+        return p;
+      }
+    }
+    return null;
+  }
+
+  public async GetPersonaCount(): Promise<number> {
+    const result = await this.personaStore.keys();
+    if (result) {
+      return result.length;
+    }
+    return 0;
+  }
+
   public async GetPersonas(): Promise<PersonaV2[]> {
     const result = await this.personaStore.keys();
     if (result) {
@@ -45,11 +63,15 @@ export class PersonaStore {
     return [];
   }
 
-  public async SetPersona(persona: PersonaV2): Promise<void> {
+  public async DeletePersona(id: string): Promise<void> {
+    await this.personaStore.removeItem(id);
+  }
+
+  public async SetPersona(persona: PersonaV2): Promise<PersonaV2> {
     if (!persona.id) {
       persona.id = Guid.generate();
     }
-    await this.personaStore.setItem(persona.id, persona);
+    return await this.personaStore.setItem(persona.id, persona);
   }
 
   public async GetConversation(personaId: string): Promise<ChatMessage[]> {

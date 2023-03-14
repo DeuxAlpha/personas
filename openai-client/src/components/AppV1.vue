@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-row min-w-screen min-h-screen bg-gray-900 text-white">
+  <div class="flex flex-row w-full min-h-screen bg-gray-900 text-white">
     <VueModal v-model="openEditModal" modal-class="bg-gray-900 rounded shadow shadow-gray-700">
       <div class="flex flex-col">
         <textarea class="bg-gray-800 text-white" rows="5" cols="33" v-model="selectedPersona"/>
@@ -44,8 +44,8 @@
     <div class="w-1/3 resize-x">
       <SidePanel :persona="persona" @add="onPersonaAdded" @selected="onPersonaSelected"
                  @selected-perm="permPersona = $event"
-                 :personaImgs="personaImg" :selected-persona="selectedPersona" @edit="onPersonaEdit"
-                 @delete="onPersonaDeleted"/>
+                 :selected-persona="selectedPersona" @edit="onPersonaEdit"
+                 @delete="onPersonaDeleted" @saved="onPersonaSaved" @loaded="onPermanentPersonasLoaded"/>
     </div>
     <div class="flex flex-col w-2/3">
       <div class="flex flex-col justify-center items-center">
@@ -53,12 +53,12 @@
           Selected Persona:
         </h1>
         <h3 class="text-amber-400">
-          <template v-if="permPersona">
-            {{ permPersona.description }}
-          </template>
-          <template v-else>
+<!--          <template v-if="permPersona">-->
+<!--            {{ permPersona }}-->
+<!--          </template>-->
+<!--          <template v-else>-->
             {{ selectedPersona }}
-          </template>
+<!--          </template>-->
         </h3>
       </div>
       <div class="flex flex-col">
@@ -98,6 +98,21 @@
               Clear Prefix
             </button>
           </div>
+          <div class="flex flex-col justify-end">
+            <button @click="onGenerateClicked"
+                    class="bg-amber-300 text-black font-bold py-2 px-4 rounded-full hover:shadow-md self-start mt-2">
+              Generate prompt
+              <template v-if="generateLoading">...</template>
+            </button>
+            <button v-if="mode === 'completion' || model !== 'gpt-3.5-turbo'" @click="onSwitchChatClicked"
+                    class="bg-amber-300 text-black font-bold py-2 px-4 rounded-full hover:shadow-md self-start mt-2">
+              Switch to chat
+            </button>
+            <button @click="onClearClicked"
+                    class="bg-amber-300 text-black font-bold py-2 px-4 rounded-full hover:shadow-md self-start mt-2">
+              Clear
+            </button>
+          </div>
           <div class="flex flex-col h-full space-y-2">
             <div class="flex justify-center flex-1 relative">
               <label class="absolute top-0 left-0 text-gray-100 text-xs">Temperature</label>
@@ -114,7 +129,7 @@
           </div>
           <div class="mx-auto"/>
           <img @click="onGenerateImgClicked" :alt="imgLoading ? '...' : 'Profile Picture'"
-               :src="permPersona ? permPersona.imgUrl : personaImg[selectedPersonaIndex]"
+               :src="permPersona ? permPersona.imgUrl : persona[selectedPersonaIndex].imgUrl"
                class="w-32 h-32 cursor-pointer rounded p-1"/>
         </div>
         <button class="bg-amber-300 text-black text-sm py-2" @click="getPrompt">
@@ -135,10 +150,9 @@
         </button>
       </div>
       <div class="flex flex-col">
-        <div class="w-full rounded py-2 px-1 relative" :class="convClass(conv.origin)" v-for="conv in convo">
-          <span v-html="conv.text"></span>
-          <span class="absolute text-xs bottom-0" :class="convOriginClass(conv.origin)">{{ conv.origin }}</span>
-          <input type="checkbox" class="absolute top-0" :class="convOriginClass(conv.origin)" v-model="conv.prefix"/>
+        <div class="w-full rounded py-2 px-1 relative" :class="convClass(conv.origin)" v-for="conv in convo"
+             :key="conv.text">
+          <Chatbox :convo="conv" @prefix-update="conv.prefix = $event"/>
         </div>
       </div>
     </div>
@@ -156,18 +170,21 @@ import VueModal from "../components/Modal.vue";
 import {AiModel} from "../types/AiModel";
 import {PersonaResponse} from "../types/PersonaResponse";
 import {ChatMessage} from "../types/ChatMessage";
+import {marked} from 'marked';
+import hljs from "highlight.js/lib/core";
+import gsap from "gsap";
+import Chatbox from "./Chatbox.vue";
+import {PersonaStore} from "../services/PersonaStore";
+import {PersonaV2} from "../types/Persona";
 
-const persona: Ref<string[]> = ref([`
-  John,
-  He's a nice guy
-`, `
-  Jane,
-  She's a nice girl
-`]);
-const personaImg: Ref<string[]> = ref([]);
+const persona: Ref<PersonaV2[]> = ref([{
+  persona: 'John, He\'s a nice guy',
+}, {
+  persona: 'Jane, she\'s a nice girl',
+}]);
 const model = ref('text-davinci-003');
 
-const selectedPersona = ref(persona.value[0])
+const selectedPersona = ref(persona.value[0].persona)
 const selectedPersonaIndex = ref(0);
 
 const prompt = ref('Hello World!')
@@ -193,11 +210,32 @@ const submit = async () => {
         FrequencyPenalty: frequencyPenalty.value,
         PresencePenalty: presencePenalty.value,
       }).finally(() => submitLoading.value = false);
-      convo.value.unshift({text: prompt.value, origin: 'user'});
-      convo.value.unshift({text: response, origin: 'assistant'});
+      convo.value.unshift({
+        text: marked(prompt.value, {
+          highlight(code: string, lang: string): string | void {
+            if (lang && hljs.getLanguage(lang)) {
+              return hljs.highlight(code, {language: lang}).value;
+            }
+            return hljs.highlightAuto(code).value;
+          }
+        }), origin: 'user'
+      });
+      convo.value.unshift({
+        text: marked(response, {
+          highlight(code: string, lang: string, callback?: (error: any, code?: string) => void): string | void {
+            if (lang && hljs.getLanguage(lang)) {
+              return hljs.highlight(code, {language: lang}).value;
+            }
+            return hljs.highlightAuto(code).value;
+          }
+        }), origin: 'assistant'
+      });
     } else if (mode.value === 'chat') {
       console.log('chat', permPersona.value?.description)
-      const chat: ChatMessage[] = [{role: 'system', content: `Context: You are playing a persona. Act accordingly: ${permPersona.value?.description || 'nothing'}`}, {
+      const chat: ChatMessage[] = [{
+        role: 'system',
+        content: `Context: You are playing a persona. Act accordingly: ${permPersona.value?.description || 'nothing'}`
+      }, {
         role: 'user',
         content: prompt.value
       }];
@@ -212,8 +250,26 @@ const submit = async () => {
         messages: chat
       }).finally(() => submitLoading.value = false);
       console.log('response', response)
-      convo.value.unshift({text: prompt.value, origin: 'user'});
-      convo.value.unshift({text: response, origin: 'assistant'});
+      convo.value.unshift({
+        text: marked(prompt.value, {
+          highlight(code: string, lang: string): string | void {
+            if (lang && hljs.getLanguage(lang)) {
+              return hljs.highlight(code, {language: lang}).value;
+            }
+            return hljs.highlightAuto(code).value;
+          }
+        }), origin: 'user'
+      });
+      convo.value.unshift({
+        text: marked(response, {
+          highlight(code: string, lang: string): string | void {
+            if (lang && hljs.getLanguage(lang)) {
+              return hljs.highlight(code, {language: lang}).value;
+            }
+            return hljs.highlightAuto(code).value;
+          }
+        }), origin: 'assistant'
+      });
     }
   } else {
     console.log('selectedPersona', selectedPersona.value)
@@ -229,11 +285,14 @@ const submit = async () => {
         FrequencyPenalty: frequencyPenalty.value,
         PresencePenalty: presencePenalty.value,
       }).finally(() => submitLoading.value = false);
-      convo.value.unshift({text: prompt.value, origin: 'user'});
-      convo.value.unshift({text: newText, origin: 'assistant'});
+      convo.value.unshift({text: marked(prompt.value), origin: 'user'});
+      convo.value.unshift({text: marked(newText), origin: 'assistant'});
     } else if (mode.value === 'chat') {
       console.log('chat', selectedPersona.value)
-      const chat: ChatMessage[] = [{role: 'system', content: `Context: You are playing a persona. Act maccordingly: ${selectedPersona.value}`}, {
+      const chat: ChatMessage[] = [{
+        role: 'system',
+        content: `Context: You are playing a persona. Act maccordingly: ${selectedPersona.value}`
+      }, {
         role: 'user',
         content: prompt.value
       }];
@@ -249,8 +308,8 @@ const submit = async () => {
         messages: chat
       }).finally(() => submitLoading.value = false);
       console.log('response', response)
-      convo.value.unshift({text: prompt.value, origin: 'user'});
-      convo.value.unshift({text: response, origin: 'assistant'});
+      convo.value.unshift({text: marked(prompt.value), origin: 'user'});
+      convo.value.unshift({text: marked(response), origin: 'assistant'});
     }
   }
 }
@@ -264,9 +323,9 @@ const onPersonaAdded = () => {
   createNewPersona.value = true;
 }
 
-const onPersonaSelected = (selected: string) => {
+const onPersonaSelected = (selected: PersonaV2) => {
   permPersona.value = undefined;
-  selectedPersona.value = selected;
+  selectedPersona.value = selected.persona;
   selectedPersonaIndex.value = persona.value.indexOf(selected);
 }
 
@@ -294,7 +353,7 @@ const getPrompt = async () => {
 const convClass = (origin: 'assistant' | 'user' | 'system') => {
   return origin === 'assistant' ? {'bg-gray-600': true} : {'bg-blue-600': true, 'text-right': true};
 }
-const convOriginClass = (origin: 'assistant' | 'user') => {
+const convOriginClass = (origin: 'assistant' | 'user' | 'system') => {
   return origin === 'assistant' ? {'left-0': true} : {'right-0': true};
 }
 
@@ -356,7 +415,9 @@ const onNewPersonaSubmit = async () => {
   }).finally(() => {
     newPersonaSubmitLoading.value = false;
   });
-  persona.value.push(newPersona);
+  persona.value.push({
+    persona: newPersona
+  });
   createNewPersona.value = false;
 }
 
@@ -371,9 +432,16 @@ const onRedefinePersona = async () => {
   openEditModal.value = false
 }
 
-const onPersonaDeleted = (personIdx: number) => {
-  persona.value.splice(personIdx, 1);
-  personaImg.value.splice(personIdx, 1);
+const personaStore = new PersonaStore();
+
+const onPersonaDeleted = async (toDelete: string) => {
+  const found = persona.value.find(p => p === toDelete);
+  if (!found) return;
+  persona.value.splice(persona.value.indexOf(found), 1);
+  const permDelete = await personaStore.GetPersonaBySelf(toDelete);
+  if (permDelete) {
+    await personaStore.DeletePersona(permDelete.id || '');
+  }
 }
 
 const temperature = ref(0);
@@ -391,6 +459,59 @@ const permPersona: Ref<PersonaResponse | undefined> = ref(undefined);
 
 const mode = ref('completion') as Ref<'chat' | 'completion'>
 const filterChat = ref(false);
+
+const generateLoading = ref(false);
+
+const onGenerateClicked = async () => {
+  generateLoading.value = true;
+  if (permPersona.value !== undefined) {
+    prompt.value = await apiClient.GetPrompt({
+      persona: permPersona.value?.description || '',
+      prefix: getPrefix(),
+      model: 'text-davinci-003'
+    }).finally(() => generateLoading.value = false);
+  } else {
+    const newPrompt = await apiClient.GetPrompt({
+      persona: selectedPersona.value,
+      prefix: getPrefix(),
+      model: 'text-davinci-003'
+    }).finally(() => generateLoading.value = false);
+    console.log('prompt', newPrompt);
+    prompt.value = newPrompt;
+  }
+}
+
+const onClearClicked = () => {
+  convo.value = [];
+}
+
+const chatLoading = ref(false);
+
+const onChatClicked = async () => {
+  chatLoading.value = true;
+
+}
+
+const onSwitchChatClicked = () => {
+  mode.value = 'chat';
+  model.value = 'gpt-3.5-turbo';
+}
+
+const onConvLoaded = (conv: Conversation) => {
+  console.log('Hello', conv.origin);
+}
+
+const onPersonaSaved = (newPersona: PersonaResponse, personaIdx: number) => {
+  persona.value[personaIdx] = newPersona.description;
+}
+
+const onPermanentPersonasLoaded = (personas?: PersonaResponse[]) => {
+  if (!personas) return;
+  for (let permPersona of personas) {
+    persona.value.push(permPersona.description);
+    personaImg.value.push(permPersona.imgUrl || '');
+  }
+}
 
 </script>
 

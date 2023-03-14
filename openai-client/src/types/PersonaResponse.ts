@@ -1,5 +1,5 @@
 export type PersonaResponse = {
-  id: number;
+  id: string;
   description: string;
   imgUrl?: string;
 }

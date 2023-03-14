@@ -1,0 +1,103 @@
+body {
+    background-color: #000000;
+    color: #ffffff;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 12px;
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+}
+
+#app {
+    width: 100%;
+    height: 100%;
+}
+
+$heading-font: 'Montserrat', sans-serif;
+$body-font: 'Open Sans', sans-serif;
+// Light golden color
+$heading-color: hsla(0, 0%, 100%, 0.9);
+//Blueish-silver color
+$body-color: hsla(0, 0%, 100%, 0.8);
+$primary-color: #007bff;
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: $heading-font;
+    color: $heading-color;
+}
+
+p,
+ul,
+ol {
+    font-family: $body-font;
+    color: $body-color;
+}
+
+a {
+    color: $primary-color;
+    text-decoration: none;
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+ul,
+ol {
+    padding-left: 20px;
+    margin-bottom: 10px;
+    li {
+        list-style-position: outside;
+    }
+}
+
+blockquote {
+    border-left: 5px solid $primary-color;
+    margin: 0;
+    padding: 10px 20px;
+    font-style: italic;
+}
+// Primary color is slightly golden
+$primary-color: #FFD700;
+$secondary-color: #FFDAB9;
+$bg-color: #FFF;
+$text-color: #333;
+
+body {
+    background-color: $bg-color;
+    color: $text-color;
+}
+
+a {
+    color: $primary-color;
+    text-decoration: none;
+
+    &:hover, &:active {
+        color: lighten($primary-color, 20%);
+    }
+}
+
+button,
+input[type="submit"] {
+    background-color: $primary-color;
+    color: $bg-color;
+    border: none;
+    border-radius: 3px;
+
+    &:hover,
+    &:active {
+        background-color: darken($primary-color, 10%);
+    }
+}
+//
+.secondary-btn {
+    background-color: $secondary-color;
+    color: $bg-color;
+    border: none;
+    border-radius: 3px;
+
+    &:hover,
+    &:active {
+        background-color: lighten($secondary-color, 10%);
+    }
+}

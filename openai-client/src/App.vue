@@ -3,7 +3,7 @@
 import AppV1 from "./components/AppV1.vue";
 import AppV2 from "./components/AppV2.vue";
 
-const v = 2;
+const v = 1;
 
 </script>
 
