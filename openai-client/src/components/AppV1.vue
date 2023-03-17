@@ -359,8 +359,8 @@ const convOriginClass = (origin: 'assistant' | 'user' | 'system') => {
 
 const openEditModal = ref(false);
 
-const onPersonaEdit = (event: string) => {
-  selectedPersona.value = event;
+const onPersonaEdit = (event: PersonaV2) => {
+  selectedPersona.value = event.persona;
   selectedPersonaIndex.value = persona.value.indexOf(event);
   openEditModal.value = true;
 }
@@ -369,7 +369,7 @@ const editSubmitLoading = ref(false);
 const onEditPersonaSubmit = () => {
   editSubmitLoading.value = true;
   openEditModal.value = false;
-  persona.value[selectedPersonaIndex.value] = selectedPersona.value;
+  persona.value[selectedPersonaIndex.value].persona = selectedPersona.value;
   editSubmitLoading.value = false;
 }
 
@@ -384,7 +384,7 @@ const onGenerateImgClicked = async () => {
       })
       .finally(() => imgLoading.value = false);
   console.log('img', img);
-  personaImg.value[selectedPersonaIndex.value] = img;
+  persona.value[selectedPersonaIndex.value].imgUrl = img;
 }
 
 const clearPrefix = () => {
@@ -399,7 +399,9 @@ const randomPersonaLoading = ref(false);
 const onRandomPersonaSubmit = async () => {
   randomPersonaLoading.value = true;
   const newPersona = await apiClient.GetRandomPersona().finally(() => randomPersonaLoading.value = false);
-  persona.value.push(newPersona);
+  persona.value.push({
+    persona: newPersona
+  });
   createNewPersona.value = false;
 }
 const desc = ref('');
@@ -427,7 +429,7 @@ const onRedefinePersona = async () => {
   const updatedPersona = await apiClient.GetRedefinedPersona({
     base: selectedPersona.value
   }).finally(() => redefineSubmitLoading.value = false);
-  persona.value[selectedPersonaIndex.value] = updatedPersona;
+  persona.value[selectedPersonaIndex.value].persona = updatedPersona;
   selectedPersona.value = updatedPersona;
   openEditModal.value = false
 }
@@ -435,7 +437,7 @@ const onRedefinePersona = async () => {
 const personaStore = new PersonaStore();
 
 const onPersonaDeleted = async (toDelete: string) => {
-  const found = persona.value.find(p => p === toDelete);
+  const found = persona.value.find(p => p.persona === toDelete);
   if (!found) return;
   persona.value.splice(persona.value.indexOf(found), 1);
   const permDelete = await personaStore.GetPersonaBySelf(toDelete);
@@ -502,14 +504,17 @@ const onConvLoaded = (conv: Conversation) => {
 }
 
 const onPersonaSaved = (newPersona: PersonaResponse, personaIdx: number) => {
-  persona.value[personaIdx] = newPersona.description;
+  persona.value[personaIdx].persona = newPersona.description;
 }
 
 const onPermanentPersonasLoaded = (personas?: PersonaResponse[]) => {
   if (!personas) return;
   for (let permPersona of personas) {
-    persona.value.push(permPersona.description);
-    personaImg.value.push(permPersona.imgUrl || '');
+    persona.value.push({
+      persona: permPersona.description,
+      imgUrl: permPersona.imgUrl,
+      id: permPersona.id
+    });
   }
 }
 

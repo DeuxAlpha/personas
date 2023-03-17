@@ -9,11 +9,12 @@
 import gsap from "gsap";
 import {onMounted, Ref, ref} from "vue";
 import hljs from "highlight.js/lib/core";
+import {Conversation} from "../types/Conversation";
 
 const chatbox = ref(null) as Ref<HTMLElement | null>;
 
 const props = defineProps<{
-  convo: { text: string, origin: 'assistant' | 'user' | 'system', prefix: boolean };
+  convo: Conversation;
 }>();
 
 onMounted(() => {
