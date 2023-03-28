@@ -41,11 +41,14 @@ export class ApiClient {
       throw new Error('Failed to get persona');
     }
 
+    console.log('persona data choices', persona.data);
+
     const dataChoice = persona.data.choices[0].text;
     return dataChoice as string;
   }
 
   public async GetPrompt(req: PromptRequest): Promise<string> {
+    console.log('req', req);
     const prompt = await this.client.post('/api/completions/prompt', req);
 
     if (prompt.status !== 200) {

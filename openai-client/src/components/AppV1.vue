@@ -11,7 +11,7 @@
           </button>
           <button @click="onRedefinePersona"
                   class="bg-amber-300 text-black font-bold py-2 px-4 rounded-full hover:shadow-md mt-2">
-            Redefine
+            Expand
             <template v-if="redefineSubmitLoading">...</template>
           </button>
         </div>
@@ -152,7 +152,7 @@
       <div class="flex flex-col">
         <div class="w-full rounded py-2 px-1 relative" :class="convClass(conv.origin)" v-for="conv in convo"
              :key="conv.text">
-          <Chatbox :convo="conv" @prefix-update="conv.prefix = $event"/>
+          <Chatbox :convo="conv" @prefix-update="onPrefixUpdate(conv)"/>
         </div>
       </div>
     </div>
@@ -297,7 +297,8 @@ const submit = async () => {
         content: prompt.value
       }];
       for (let c of convo.value) {
-        if (filterChat.value && c.prefix === false) {
+        console.log('conv', c);
+        if (filterChat.value === true && c.prefix !== true) {
           continue;
         }
         chat.unshift({role: c.origin, content: c.text});
@@ -429,18 +430,18 @@ const onRedefinePersona = async () => {
   const updatedPersona = await apiClient.GetRedefinedPersona({
     base: selectedPersona.value
   }).finally(() => redefineSubmitLoading.value = false);
-  persona.value[selectedPersonaIndex.value].persona = updatedPersona;
-  selectedPersona.value = updatedPersona;
+  persona.value[selectedPersonaIndex.value].persona += updatedPersona;
+  selectedPersona.value += updatedPersona;
   openEditModal.value = false
 }
 
 const personaStore = new PersonaStore();
 
-const onPersonaDeleted = async (toDelete: string) => {
-  const found = persona.value.find(p => p.persona === toDelete);
+const onPersonaDeleted = async (toDelete: PersonaV2) => {
+  const found = persona.value.find(p => p === toDelete);
   if (!found) return;
   persona.value.splice(persona.value.indexOf(found), 1);
-  const permDelete = await personaStore.GetPersonaBySelf(toDelete);
+  const permDelete = await personaStore.GetPersonaBySelf(toDelete.persona);
   if (permDelete) {
     await personaStore.DeletePersona(permDelete.id || '');
   }
@@ -515,6 +516,16 @@ const onPermanentPersonasLoaded = (personas?: PersonaResponse[]) => {
       imgUrl: permPersona.imgUrl,
       id: permPersona.id
     });
+  }
+}
+
+const onPrefixUpdate = (conv: Conversation) => {
+  if (conv.prefix === true) {
+    conv.prefix = false;
+  } else if (conv.prefix === false) {
+    conv.prefix = true;
+  } else {
+    conv.prefix = true;
   }
 }
 
