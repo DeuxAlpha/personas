@@ -12,7 +12,7 @@ jobs:
       - name: AI Code Review
         uses: AleksandrFurmenkovOfficial/ai-code-review@v0.1.1
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.TOKEN }}
           openai_api_key: ${{ secrets.OPENAI_API_KEY }}
           owner: ${{ github.repository_owner }}
           repo: ${{ github.event.repository.name }}
