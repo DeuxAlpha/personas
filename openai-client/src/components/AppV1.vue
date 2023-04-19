@@ -17,7 +17,59 @@
         </div>
       </div>
     </VueModal>
-    <VueModal v-model="createNewPersona" modal-class="bg-gray-900 rounded shadow shadow-gray-700">
+    <VueModal v-model="createNewPersona" modal-class="bg-gray-900 rounded shadow shadow-gray-700 w-11/12">
+      <div class="flex flex-col space-y-1">
+        <div class="flex flex-row space-x-0.5">
+          <span class="text-white">a</span> <select v-model="ai[0]">
+          <option value="generous">generous</option>
+          <option value="greedy">greedy</option>
+          <option value="honest">honest</option>
+          <option value="dishonest">dishonest</option>
+          <option value="kind">kind</option>
+          <option value="mean">mean</option>
+          <option value="loyal">loyal</option>
+          <option value="crazy">crazy</option>
+          <option value="insane">insane</option>
+          <option value="disloyal">disloyal</option>
+          <option value="brave">brave</option>
+          <option value="cowardly">cowardly</option>
+          <option value="proud">proud</option>
+          <option value="humble">humble</option>
+          <option value="patient">patient</option>
+          <option value="impatient">impatient</option>
+        </select> <span class="text-white">character, with a</span> <select v-model="ai[1]">
+          <option value="dangerous">dangerous</option>
+          <option value="peaceful">peaceful</option>
+          <option value="powerful">powerful</option>
+          <option value="weak">weak</option>
+          <option value="rich">rich</option>
+          <option value="poor">poor</option>
+          <option value="smart">smart</option>
+          <option value="stupid">stupid</option>
+          <option value="beautiful">beautiful</option>
+          <option value="ugly">ugly</option>
+          <option value="strong">strong</option>
+          <option value="weak">weak</option>
+        </select>
+          <span class="text-white">background in</span> <select v-model="ai[2]">
+          <option value="the military">the military</option>
+          <option value="the arts">the arts</option>
+          <option value="the sciences">the sciences</option>
+          <option value="the law">the law</option>
+          <option value="the clergy">the clergy</option>
+          <option value="the government">the government</option>
+          <option value="the business world">the business world</option>
+          <option value="the underworld">the underworld</option>
+          <option value="the medical field">the medical field</option>
+          <option value="the culinary arts">the culinary arts</option>
+          <option value="the entertainment industry">the entertainment industry</option>
+          <option value="the sports world">the sports world</option>
+        </select>
+        </div>
+        <button class="bg-amber-300 text-black font-bold py-2 px-4 rounded-full hover:shadow-md self-start"
+                @click="submitGenerativeAi">Submit
+        </button>
+      </div>
       <div class="flex flex-row space-x-2">
         <div class="flex flex-col w-1/2 relative">
           <label class="text-gray-100 absolute top-0 left-0 text-xs">Description</label>
@@ -53,12 +105,12 @@
           Selected Persona:
         </h1>
         <h3 class="text-amber-400">
-<!--          <template v-if="permPersona">-->
-<!--            {{ permPersona }}-->
-<!--          </template>-->
-<!--          <template v-else>-->
-            {{ selectedPersona }}
-<!--          </template>-->
+          <!--          <template v-if="permPersona">-->
+          <!--            {{ permPersona }}-->
+          <!--          </template>-->
+          <!--          <template v-else>-->
+          {{ selectedPersona }}
+          <!--          </template>-->
         </h3>
       </div>
       <div class="flex flex-col">
@@ -176,6 +228,11 @@ import gsap from "gsap";
 import Chatbox from "./Chatbox.vue";
 import {PersonaStore} from "../services/PersonaStore";
 import {PersonaV2} from "../types/Persona";
+
+const ai = ref(['', '', '']);
+const generatedAi = () => {
+  return `a ${ai.value[0]} character, with a ${ai.value[1]} background in ${ai.value[2]}`
+}
 
 const persona: Ref<PersonaV2[]> = ref([{
   persona: 'John, He\'s a nice guy',
@@ -409,6 +466,20 @@ const desc = ref('');
 const pretext = ref('');
 
 const newPersonaSubmitLoading = ref(false);
+
+const submitGenerativeAi = async () => {
+  newPersonaSubmitLoading.value = true;
+  const newPersona = await apiClient.GetNewPersona({
+    description: `${generatedAi()} ${desc.value}`,
+    pretext: pretext.value
+  }).finally(() => {
+    newPersonaSubmitLoading.value = false;
+  });
+  persona.value.push({
+    persona: newPersona
+  });
+  createNewPersona.value = false;
+}
 
 const onNewPersonaSubmit = async () => {
   newPersonaSubmitLoading.value = true;
