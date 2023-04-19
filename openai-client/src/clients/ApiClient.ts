@@ -41,11 +41,14 @@ export class ApiClient {
       throw new Error('Failed to get persona');
     }
 
+    console.log('persona data choices', persona.data);
+
     const dataChoice = persona.data.choices[0].text;
     return dataChoice as string;
   }
 
   public async GetPrompt(req: PromptRequest): Promise<string> {
+    console.log('req', req);
     const prompt = await this.client.post('/api/completions/prompt', req);
 
     if (prompt.status !== 200) {
@@ -155,7 +158,7 @@ export class ApiClient {
     return resp.data;
   }
 
-  public async DeletePersona(personaId: number): Promise<void> {
+  public async DeletePersona(personaId: string): Promise<void> {
     if (!personaId) throw new Error('Persona id is required');
     const resp = await this.client.delete(`/api/persona/${personaId}`);
 

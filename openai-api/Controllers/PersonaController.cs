@@ -24,12 +24,12 @@ public class PersonaController : Controller
     {
         var openAiService = OpenAiServiceProvider.ProvideAiService();
 
-        var personaEdit = await openAiService.CreateEdit(new EditCreateRequest
+        var personaEdit = await openAiService.CreateCompletion(new CompletionCreateRequest
         {
-            Instruction =
-                "Come up with an interesting persona, providing a name, and an interesting description, and return it in plaintext format.",
-            Input = @"{Replace this with the Name}, {Replace this with an embellished description of the individual}.",
-            Model = "text-davinci-edit-001"
+            Model = "text-davinci-003",
+            MaxTokens = 250,
+            Prompt =
+                "Come up with an interesting persona, providing a name, and an interesting description, and return it in plaintext format." + @"{Replace this with the Name}, {Replace this with an embellished description of the individual}.",
         });
 
         return Ok(personaEdit);
@@ -88,6 +88,8 @@ public class PersonaController : Controller
             }));
     }
 
+    
+
     [HttpPost]
     public async Task<ActionResult> GetPersona([FromBody] PersonaRequest request)
     {
@@ -99,12 +101,14 @@ public class PersonaController : Controller
         if (!string.IsNullOrWhiteSpace(request.Pretext))
             prompt += "\n" + "Pretext: " + request.Pretext;
 
-        var personaEdit = await openAiService.CreateEdit(new EditCreateRequest
+        // Update 2023-03-26: The API no longer supports edits, so these responses will probably be wonky for a while.
+        var personaEdit = await openAiService.CreateCompletion(new CompletionCreateRequest
         {
-            Instruction = prompt,
-            Input =
-                @"{Replace this with the Name}, {Replace this with an embellished description and pretext of the individual}.",
-            Model = "text-davinci-edit-001"
+            Prompt = prompt + @"{Replace this with the Name}, {Replace this with an embellished description and pretext of the individual}.",
+            // Input =
+                // @"{Replace this with the Name}, {Replace this with an embellished description and pretext of the individual}.",
+            Model = "text-davinci-003",
+            MaxTokens = 250
         });
 
         return Ok(personaEdit);
@@ -117,11 +121,11 @@ public class PersonaController : Controller
         var prompt =
             "Update and improve the existing persona and return it in plaintext.";
 
-        var personaEdit = await openAiService.CreateEdit(new EditCreateRequest
+        var personaEdit = await openAiService.CreateCompletion(new CompletionCreateRequest
         {
-            Instruction = prompt,
-            Input = request.Base,
-            Model = "text-davinci-edit-001"
+            Prompt = $"Do not complete, but redefine the following character.{prompt} {request.Base}",
+            // Input = request.Base,
+            Model = "text-davinci-003"
         });
 
         return Ok(personaEdit);
