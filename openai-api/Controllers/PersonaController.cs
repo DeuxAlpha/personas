@@ -24,12 +24,12 @@ public class PersonaController : Controller
     {
         var openAiService = OpenAiServiceProvider.ProvideAiService();
 
-        var personaEdit = await openAiService.CreateEdit(new EditCreateRequest
+        var personaEdit = await openAiService.CreateCompletion(new CompletionCreateRequest
         {
-            Instruction =
-                "Come up with an interesting persona, providing a name, and an interesting description, and return it in plaintext format.",
-            Input = @"{Replace this with the Name}, {Replace this with an embellished description of the individual}.",
-            Model = "text-davinci-003"
+            Model = "text-davinci-003",
+            MaxTokens = 250,
+            Prompt =
+                "Come up with an interesting persona, providing a name, and an interesting description, and return it in plaintext format." + @"{Replace this with the Name}, {Replace this with an embellished description of the individual}.",
         });
 
         return Ok(personaEdit);
@@ -88,6 +88,8 @@ public class PersonaController : Controller
             }));
     }
 
+    
+
     [HttpPost]
     public async Task<ActionResult> GetPersona([FromBody] PersonaRequest request)
     {
@@ -105,7 +107,8 @@ public class PersonaController : Controller
             Prompt = prompt + @"{Replace this with the Name}, {Replace this with an embellished description and pretext of the individual}.",
             // Input =
                 // @"{Replace this with the Name}, {Replace this with an embellished description and pretext of the individual}.",
-            Model = "text-davinci-003"
+            Model = "text-davinci-003",
+            MaxTokens = 250
         });
 
         return Ok(personaEdit);
